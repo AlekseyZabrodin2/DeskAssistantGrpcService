@@ -1,0 +1,58 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "DeskAssistantGrpcService";
+
+service TaskService {
+  rpc CreateTask (TaskItem) returns (TaskResponse);
+  rpc UpdateTask (TaskItem) returns (TaskResponse);
+  rpc GetAllTasks (EmptyRequest) returns (GetAllTasksResponse);
+  rpc CompleteTask (TaskCompleteRequest) returns (TaskResponse);
+  rpc NotifyTask (TaskNotifyRequest) returns (TaskResponse);
+}
+
+message TaskItem {
+	string id = 1;
+    string name = 2;
+    string description = 3;
+    string due_date = 4;
+    string is_completed =5;
+    string priority = 6;
+    string category = 7;
+    string status = 8;
+    string tags = 9;
+    string created_date = 10;
+    string due_time = 11;
+    string reminder_time = 12;
+    string completed_date = 13;
+    string is_recurring = 14;
+    string recurrence_pattern = 15;
+    string duration = 16;
+}
+
+message TaskItemRequest{
+    repeated TaskItem tasks = 1;
+}
+
+message GetAllTasksResponse {
+	bool success = 1;
+	string message = 2;
+	repeated TaskItem tasks = 3;
+}
+
+message EmptyRequest {}
+
+message TaskResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message TaskCompleteRequest{
+	int32 task_id = 1;
+}
+
+message TaskNotifyRequest {
+  int32 task_id = 1;
+  string task_name = 2;
+  string task_priority = 3;
+  string task_due_date = 4;
+}
