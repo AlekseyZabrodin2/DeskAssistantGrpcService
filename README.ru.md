@@ -44,7 +44,7 @@ DeskAssistantGrpcService
 ### 1. Сборка проекта
 
 ```bash
-dotnet publish -c Release -r win-x64
+dotnet publish -c Release -r win-x64 --self-contained true
 ````
 
 После сборки исполняемый файл появится по пути:
@@ -94,6 +94,8 @@ sc start DeskAssistantGrpcService
 ```bash
 sc stop DeskAssistantGrpcService
 ```
+
+> ⚠️ Для ручного запуска через консоль могут потребоваться права администратора, если сервис взаимодействует с PostgreSQL как Windows-службой.
 
 ---
 

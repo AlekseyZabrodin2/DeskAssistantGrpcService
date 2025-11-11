@@ -43,7 +43,7 @@ DeskAssistantGrpcService
 ### 1. Project Build
 
 ```bash
-dotnet publish -c Release -r win-x64
+dotnet publish -c Release -r win-x64 --self-contained true
 ```
 
 After building, the executable will appear at:
