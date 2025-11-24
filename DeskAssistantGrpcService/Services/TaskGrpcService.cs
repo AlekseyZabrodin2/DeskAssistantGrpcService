@@ -60,8 +60,8 @@ namespace DeskAssistantGrpcService.Services
                 var response = new TaskResponse();
 
                 var taskModel = GrpcTaskItemToCalendarTaskModel(taskItem);
-
-                await _taskService.UpdateTaskAsync(taskModel, taskModel.Status);
+                var taskStatus = _enumExtensions.StatusFromString(taskModel.Status);
+                await _taskService.UpdateTaskAsync(taskModel, taskStatus);
 
                 response.Success = true;
                 response.Message = "Задача успешно обновлена";
@@ -159,7 +159,7 @@ namespace DeskAssistantGrpcService.Services
                 IsCompleted = bool.Parse(taskItem.IsCompleted),
                 Priority = _enumExtensions.PrioritiesLevelFromString(taskItem.Priority),
                 Category = taskItem.Category,
-                Status = _enumExtensions.StatusFromString(taskItem.Status),
+                Status = taskItem.Status,
                 Tags = taskItem.Tags,
                 CreatedDate = taskItem.CreatedDate == "" ? null : DateTime.SpecifyKind(DateTime.Parse(taskItem.CreatedDate), DateTimeKind.Utc),
                 DueTime = taskItem.DueTime == "" ? null : TimeSpan.Parse(taskItem.DueTime),
@@ -199,7 +199,7 @@ namespace DeskAssistantGrpcService.Services
                 IsCompleted = entity.IsCompleted,
                 Priority = entity.Priority,
                 Category = entity.Category,
-                Status = entity.Status,
+                Status = _enumExtensions.StatusToString(entity.Status),
                 Tags = entity.Tags,
                 CreatedDate = entity.CreatedDate,
                 DueTime = entity.DueTime,
@@ -222,7 +222,7 @@ namespace DeskAssistantGrpcService.Services
                 IsCompleted = model.IsCompleted.ToString(),
                 Priority = _enumExtensions.PrioritiesLevelToString(model.Priority),
                 Category = model.Category,
-                Status = _enumExtensions.StatusToString(model.Status),
+                Status = model.Status,
                 Tags = model.Tags,
                 CreatedDate = model.CreatedDate.ToString(),
                 DueTime = model.DueTime.ToString(),
