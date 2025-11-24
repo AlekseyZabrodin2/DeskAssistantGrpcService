@@ -14,7 +14,7 @@
   </ItemGroup>
 	
   <ItemGroup>
-    <PackageReference Include="DeskAssistant.Core" Version="1.0.7" />
+    <PackageReference Include="DeskAssistant.Core" Version="1.0.8" />
     <PackageReference Include="Grpc.AspNetCore" Version="2.71.0" />
 	<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.10" />
 	<PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="9.0.10" />
