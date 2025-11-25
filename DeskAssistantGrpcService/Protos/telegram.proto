@@ -1,0 +1,63 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "TelegramBotGrpcService";
+
+service TelegramService {
+  rpc TelegramGetAllTasksForWeek (TelegramEmptyRequest) returns (TelegramGetAllTasksWeekResponse);
+  rpc TelegramGetTasksForToday (TelegramEmptyRequest) returns (TelegramGetTodayTasksResponse);
+  rpc TelegramCreateTask (TelegramTaskItem) returns (TelegramTaskResponse);
+  rpc TelegramUpdateTask (TelegramTaskItem) returns (TelegramTaskResponse);  
+  rpc TelegramCompleteTask (TelegramTaskCompleteRequest) returns (TelegramTaskResponse);
+  rpc TelegramNotifyTask (TelegramTaskNotifyRequest) returns (TelegramTaskResponse);
+}
+
+message TelegramTaskItem {
+	string id = 1;
+    string name = 2;
+    string description = 3;
+    string due_date = 4;
+    string is_completed =5;
+    string priority = 6;
+    string category = 7;
+    string status = 8;
+    string tags = 9;
+    string created_date = 10;
+    string due_time = 11;
+    string reminder_time = 12;
+    string completed_date = 13;
+    string is_recurring = 14;
+    string recurrence_pattern = 15;
+    string duration = 16;
+}
+
+message TelegramEmptyRequest {}
+
+message TelegramTaskNotifyRequest {
+  int32 task_id = 1;
+  string task_name = 2;
+  string task_priority = 3;
+  string task_due_date = 4;
+}
+
+message TelegramTaskCompleteRequest{
+	int32 task_id = 1;
+}
+
+message TelegramGetAllTasksWeekResponse {
+	bool success = 1;
+	string message = 2;
+    repeated string messages = 3;
+	repeated TelegramTaskItem tasks = 4;
+}
+
+message TelegramGetTodayTasksResponse {
+	bool success = 1;
+	string message = 2;
+    repeated string messages = 3;
+	repeated TelegramTaskItem tasks = 4;
+}
+
+message TelegramTaskResponse {
+  bool success = 1;
+  string message = 2;
+}
