@@ -62,6 +62,12 @@ namespace DeskAssistantGrpcService.Services
             }
         }
 
+        public async Task DataBaseEchoAsync()
+        {
+            using var context = _contextFactory.CreateDbContext();
+            var response = await context.Database.CanConnectAsync();
+        }
+
         public Task<CalendarTaskEntity> AddTaskAsync(CalendarTaskEntity task)
         {
             throw new NotImplementedException();

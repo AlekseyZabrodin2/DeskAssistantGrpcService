@@ -149,5 +149,47 @@ namespace DeskAssistantGrpcService.Services
                 };
             }
         }
+
+        public override async Task<TaskServerEchoResponse> ServerEcho(EmptyRequest empty, ServerCallContext context)
+        {
+            try
+            {
+                return new TaskServerEchoResponse
+                {
+                    Success = true,
+                    Message = "Server ping"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new TaskServerEchoResponse
+                {
+                    Success = false,
+                    Message = $"Ошибка: {ex.Message}"
+                };
+            }
+        }
+
+        public override async Task<TaskDataBaseEchoResponse> DataBaseEcho(EmptyRequest empty, ServerCallContext context)
+        {
+            try
+            {
+                await _taskService.DataBaseEchoAsync();
+
+                return new TaskDataBaseEchoResponse
+                {
+                    Success = true,
+                    Message = "DataBase ping"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new TaskDataBaseEchoResponse
+                {
+                    Success = false,
+                    Message = $"Ошибка: {ex.Message}"
+                };
+            }
+        }
     }
 }
