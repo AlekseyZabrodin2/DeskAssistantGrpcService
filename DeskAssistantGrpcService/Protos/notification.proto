@@ -1,0 +1,42 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "NotificationGrpcService";
+
+service NotificationService {
+  rpc NotificationsGetSettings (NotificationClientIdRequest) returns (NotificationItemResponse);
+  rpc NotificationsGetStatus (NotificationItem) returns (NotificationItemResponse);
+  rpc NotificationsCreateAsync (NotificationItem) returns (NotificationResponse);
+  rpc NotificationsDeleteAsync (NotificationItem) returns (NotificationResponse);  
+  rpc NotificationsActivateAsync (NotificationItem) returns (NotificationResponse);
+  rpc NotificationsDisableAsync (NotificationItem) returns (NotificationResponse);
+}
+
+message NotificationItem {
+	string id = 1;
+    string client_id = 2;
+    string is_enabled = 3;
+    string notification_time = 4;
+    string monday_enabled =5;
+    string tuesday_enabled = 6;
+    string wednesday_enabled = 7;
+    string thursday_enabled = 8;
+    string friday_enabled = 9;
+    string saturday_enabled = 10;
+    string sunday_enabled = 11;
+    string created_at = 12;
+}
+
+message NotificationClientIdRequest{
+	string client_id = 1;
+}
+
+message NotificationResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message NotificationItemResponse {
+  bool success = 1;
+  string message = 2;
+  repeated NotificationItem notification = 3;
+}
