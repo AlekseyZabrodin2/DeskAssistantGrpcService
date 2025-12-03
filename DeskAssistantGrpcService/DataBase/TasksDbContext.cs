@@ -8,10 +8,7 @@ namespace DeskAssistantGrpcService.DataBase
         public DbSet<CalendarTaskEntity> Tasks { get; set; }
 
         public TasksDbContext(DbContextOptions<TasksDbContext> options)
-            : base(options)
-        {
-            Database.EnsureCreated();
-        }
+            : base(options) { }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
