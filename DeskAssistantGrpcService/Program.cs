@@ -1,5 +1,6 @@
 using DeskAssistant.Core.Services;
 using DeskAssistantGrpcService.DataBase;
+using DeskAssistantGrpcService.Helpers;
 using DeskAssistantGrpcService.Models;
 using DeskAssistantGrpcService.Services;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +13,6 @@ var logger = LogManager.GetCurrentClassLogger();
 
 try
 {
-
     var builder = WebApplication.CreateBuilder(args);
 
     builder.Logging.ClearProviders();
@@ -38,10 +38,19 @@ try
         options.UseNpgsql(connectingString);
     });
 
+    builder.Services.AddDbContextFactory<NotificationDbContext>(options =>
+    {
+        var connectingString = builder.Configuration.GetConnectionString("DefaultNotificationTableConnection");
+        options.UseNpgsql(connectingString);
+    });
+
     // Add services to the container.
     builder.Services.AddGrpc();
+    builder.Services.AddSingleton<NotificationTimerHelper>();
     builder.Services.AddSingleton<ITelegramNotificationService, TelegramNotificationService>();
     builder.Services.AddScoped<ITaskService, TaskServiceImpl>();
+    builder.Services.AddSingleton<NotificationManagerService>();
+    builder.Services.AddScoped<INotificationService>(sp => sp.GetRequiredService<NotificationManagerService>());
 
     builder.Services.Configure<ConnectionSettings>(builder.Configuration.GetSection("ConnectionStrings"));
 
@@ -49,15 +58,20 @@ try
 
     PostgresStopping(app);
 
+    await InitializeDatabaseAndTimersAsync(app);
+
     // Configure the HTTP request pipeline.
     app.MapGrpcService<TaskGrpcService>();
     app.MapGrpcService<TelegramGrpcService>();
+    app.MapGrpcService<NotificationManagerGrpcService>();
     app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
     
     EnsurePostgresRunning();
 
+    SetupApplicationStopping(app);
+
     logger.Info("Service is started");
-    app.Run();
+    await app.RunAsync();     
 }
 catch (Exception ex)
 {
@@ -67,6 +81,24 @@ catch (Exception ex)
 finally
 {
     LogManager.Shutdown();
+}
+
+
+async Task InitializeDatabaseAndTimersAsync(WebApplication app)
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var taskFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<TasksDbContext>>();
+        using var db = taskFactory.CreateDbContext();
+        db.Database.EnsureCreated();
+
+        var notifFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<NotificationDbContext>>();
+        using var dbNotif = notifFactory.CreateDbContext();
+        dbNotif.Database.EnsureCreated();
+
+        var notificationService = scope.ServiceProvider.GetRequiredService<NotificationManagerService>();
+        await notificationService.InitializeTimersAsync();
+    }
 }
 
 void EnsurePostgresRunning()
@@ -116,6 +148,29 @@ void PostgresStopping(WebApplication app)
         catch (Exception ex)
         {
             logger.Error(ex, "Error stopping PostgreSQL service");
+        }
+    });
+}
+
+void SetupApplicationStopping(WebApplication app)
+{
+    var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
+
+    lifetime.ApplicationStopping.Register(() =>
+    {
+        logger.Info("Application stopping...");
+
+        try
+        {
+            // Останавливаем таймеры уведомлений
+            using var scope = app.Services.CreateScope();
+            var timerHelper = scope.ServiceProvider.GetRequiredService<NotificationTimerHelper>();
+            timerHelper.StopAllNotificationTimers();
+            logger.Info("? Все таймеры уведомлений остановлены.");
+        }
+        catch (Exception ex)
+        {
+            logger.Error(ex, "Error stopping application services");
         }
     });
 }

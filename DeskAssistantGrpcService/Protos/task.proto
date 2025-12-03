@@ -8,6 +8,8 @@ service TaskService {
   rpc GetAllTasks (EmptyRequest) returns (GetAllTasksResponse);
   rpc CompleteTask (TaskCompleteRequest) returns (TaskResponse);
   rpc NotifyTask (TaskNotifyRequest) returns (TaskResponse);
+  rpc ServerEcho (EmptyRequest) returns (TaskServerEchoResponse);
+  rpc DataBaseEcho (EmptyRequest) returns (TaskDataBaseEchoResponse);
 }
 
 message TaskItem {
@@ -33,18 +35,7 @@ message TaskItemRequest{
     repeated TaskItem tasks = 1;
 }
 
-message GetAllTasksResponse {
-	bool success = 1;
-	string message = 2;
-	repeated TaskItem tasks = 3;
-}
-
 message EmptyRequest {}
-
-message TaskResponse {
-  bool success = 1;
-  string message = 2;
-}
 
 message TaskCompleteRequest{
 	int32 task_id = 1;
@@ -55,4 +46,25 @@ message TaskNotifyRequest {
   string task_name = 2;
   string task_priority = 3;
   string task_due_date = 4;
+}
+
+message TaskServerEchoResponse{
+    bool success = 1;
+	string message = 2;
+}
+
+message TaskDataBaseEchoResponse{
+    bool success = 1;
+	string message = 2;
+}
+
+message GetAllTasksResponse {
+	bool success = 1;
+	string message = 2;
+	repeated TaskItem tasks = 3;
+}
+
+message TaskResponse {
+  bool success = 1;
+  string message = 2;
 }
