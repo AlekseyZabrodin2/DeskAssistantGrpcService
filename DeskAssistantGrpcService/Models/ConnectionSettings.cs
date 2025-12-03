@@ -6,6 +6,8 @@ namespace DeskAssistantGrpcService.Models
     {
         public string DefaultConnection { get; set; } = string.Empty;
 
+        public string DefaultNotificationTableConnection { get; set; } = string.Empty;
+
         public string BotClientToken { get; set; } = string.Empty;
 
         public string BotChatId { get; set; } = string.Empty;
