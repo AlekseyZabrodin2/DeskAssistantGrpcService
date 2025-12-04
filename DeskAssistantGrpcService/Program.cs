@@ -54,11 +54,7 @@ try
 
     builder.Services.Configure<ConnectionSettings>(builder.Configuration.GetSection("ConnectionStrings"));
 
-    var app = builder.Build();
-
-    PostgresStopping(app);
-
-    await InitializeDatabaseAndTimersAsync(app);
+    var app = builder.Build();  
 
     // Configure the HTTP request pipeline.
     app.MapGrpcService<TaskGrpcService>();
@@ -67,6 +63,8 @@ try
     app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
     
     EnsurePostgresRunning();
+
+    await InitializeDatabaseAndTimersAsync(app);
 
     SetupApplicationStopping(app);
 
@@ -155,6 +153,8 @@ void PostgresStopping(WebApplication app)
 void SetupApplicationStopping(WebApplication app)
 {
     var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
+
+    PostgresStopping(app);
 
     lifetime.ApplicationStopping.Register(() =>
     {
