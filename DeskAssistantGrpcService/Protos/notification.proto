@@ -5,10 +5,10 @@ option csharp_namespace = "NotificationGrpcService";
 service NotificationService {
   rpc NotificationsGetSettings (NotificationClientIdRequest) returns (NotificationItemResponse);
   rpc NotificationsGetStatus (NotificationItem) returns (NotificationItemResponse);
-  rpc NotificationsCreateAsync (NotificationItem) returns (NotificationResponse);
-  rpc NotificationsDeleteAsync (NotificationItem) returns (NotificationResponse);  
-  rpc NotificationsActivateAsync (NotificationItem) returns (NotificationResponse);
-  rpc NotificationsDisableAsync (NotificationItem) returns (NotificationResponse);
+  rpc NotificationsCreate (NotificationItem) returns (NotificationResponse);
+  rpc NotificationsDelete (NotificationItem) returns (NotificationResponse);  
+  rpc NotificationsActivate (NotificationItem) returns (NotificationResponse);
+  rpc NotificationsDisable (NotificationItem) returns (NotificationResponse);
 }
 
 message NotificationItem {
