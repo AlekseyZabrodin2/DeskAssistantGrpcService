@@ -1,5 +1,7 @@
 ﻿using DeskAssistant.Core.Models;
+using DeskAssistant.Core.Services;
 using DeskAssistantGrpcService.DataBase;
+using DeskAssistantGrpcService.Extensions;
 using DeskAssistantGrpcService.Models;
 using Microsoft.EntityFrameworkCore;
 using NLog;
@@ -11,10 +13,20 @@ namespace DeskAssistantGrpcService.Helpers
     public class NotificationTimerHelper : IDisposable
     {
         private static readonly ILogger _logger = LogManager.GetCurrentClassLogger();
-        private readonly IDbContextFactory<NotificationDbContext> _contextFactory;
         private readonly ConcurrentDictionary<Guid, NotificationTimer> _notificationTimers = new();
         private readonly ConcurrentDictionary<string, Guid> _notificationIdToTimerMap = new();
+        private CalendarTasksExtensions _calendarExtensions = new();
+        private readonly IDbContextFactory<TasksDbContext> _contextTasksDb;
+        private readonly ITelegramNotificationService _telegramService;
         private bool _disposed = false;
+
+
+        public NotificationTimerHelper(IDbContextFactory<TasksDbContext> contextTasksDb,
+            ITelegramNotificationService telegramService)
+        {
+            _contextTasksDb = contextTasksDb;
+            _telegramService = telegramService;
+        }
 
 
         public void GraficsNotificationTimers(NotificationEntity notification)
@@ -38,7 +50,7 @@ namespace DeskAssistantGrpcService.Helpers
                         $"   ├─ Время: {DateTime.Now:HH:mm:ss}\n" +
                         $"   └─ Запланированное время: {notification.NotificationTime:hh\\:mm}");
 
-                    // Будет своя логика отправки 
+                    await SendNotificationsForTodayAsync();
 
                     _logger.Info($"✅ Уведомление отправлено: {notification.Id}");
 
@@ -56,6 +68,37 @@ namespace DeskAssistantGrpcService.Helpers
             }, null, delay, Timeout.InfiniteTimeSpan);
 
             CreateNotificationTimersDictionary(notification, timerId, timer, nextAlarm);
+        }
+
+        public async Task<List<CalendarTaskEntity>> GetTodayTasksAsync()
+        {
+            await using var context = _contextTasksDb.CreateDbContext();
+            var tasks = await context.Tasks.ToListAsync();
+
+            var todayTasks = tasks.Where(task => task.DueDate == DateOnly.FromDateTime(DateTime.Now)).ToList();
+
+            return todayTasks;
+        }
+
+        public async Task SendNotificationsForTodayAsync()
+        {
+            try
+            {
+                var todayTasks = await GetTodayTasksAsync();
+
+                foreach (var taskItem in todayTasks)
+                {
+                    var taskModel = _calendarExtensions.TaskEntityToCalendarTaskModel(taskItem);
+
+                    _ = Task.Run(async () => _telegramService.NotifycationFromClientAsync(taskModel));
+
+                    _logger.Info($"Уведомление для задачи - '{taskModel.Id}' успешно отправлено");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "gRPC: Ошибка отправки уведомления");
+            }
         }
 
         private bool IsNotificationAlreadyScheduled(NotificationEntity notificationId)

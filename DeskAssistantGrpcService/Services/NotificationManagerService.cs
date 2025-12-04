@@ -2,10 +2,8 @@
 using DeskAssistant.Core.Services;
 using DeskAssistantGrpcService.DataBase;
 using DeskAssistantGrpcService.Helpers;
-using DeskAssistantGrpcService.Models;
 using Microsoft.EntityFrameworkCore;
 using NLog;
-using System.Collections.Concurrent;
 using ILogger = NLog.ILogger;
 
 namespace DeskAssistantGrpcService.Services
@@ -13,20 +11,26 @@ namespace DeskAssistantGrpcService.Services
     public class NotificationManagerService : INotificationService
     {
         private static readonly ILogger _logger = LogManager.GetCurrentClassLogger();
-        private readonly IDbContextFactory<NotificationDbContext> _contextFactory;
-        private readonly ConcurrentDictionary<Guid, NotificationTimer> _notificationTimers = new();
-        private readonly NotificationTimerHelper _timerHelper = new();
+        private readonly IDbContextFactory<NotificationDbContext> _contextNotificationDb;
+        private readonly IDbContextFactory<TasksDbContext> _contextTasksDb;
+        private readonly ITelegramNotificationService _telegramService;
+        private readonly NotificationTimerHelper _timerHelper;
 
 
-        public NotificationManagerService(IDbContextFactory<NotificationDbContext> contextFactory)
+        public NotificationManagerService(IDbContextFactory<NotificationDbContext> contextNotificationDb,
+            IDbContextFactory<TasksDbContext> contextTasksDb,
+            ITelegramNotificationService telegramService)
         {
-            _contextFactory = contextFactory;
+            _contextNotificationDb = contextNotificationDb;
+            _contextTasksDb = contextTasksDb;
+            _telegramService = telegramService;
+            _timerHelper = new(_contextTasksDb, _telegramService);
         }
 
 
         public async Task CreatNotificationsAsync(NotificationEntity notification)
         {
-            await using var context = _contextFactory.CreateDbContext();
+            await using var context = _contextNotificationDb.CreateDbContext();
 
             await context.Notifications.AddAsync(notification);
             await context.SaveChangesAsync();
@@ -51,7 +55,7 @@ namespace DeskAssistantGrpcService.Services
 
         public async Task<List<NotificationEntity>> GetNotificationsSettingsAsync(string clientId)
         {
-            using var context = _contextFactory.CreateDbContext();
+            using var context = _contextNotificationDb.CreateDbContext();
             var notifications = await context.Notifications
                 .Where(notif => notif.ClientId == clientId)
                 .ToListAsync();
@@ -81,7 +85,7 @@ namespace DeskAssistantGrpcService.Services
 
         public async Task InitializeTimersAsync()
         {
-            await using var context = _contextFactory.CreateDbContext();
+            await using var context = _contextNotificationDb.CreateDbContext();
             var notifications = await context.Notifications.ToListAsync();
 
             foreach (var notification in notifications)

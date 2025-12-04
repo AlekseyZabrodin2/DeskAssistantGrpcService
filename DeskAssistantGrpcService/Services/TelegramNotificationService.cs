@@ -66,6 +66,34 @@ namespace DeskAssistantGrpcService.Services
             }
         }
 
+        public async Task NotifycationFromClientAsync(CalendarTaskModel notification)
+        {
+            try
+            {
+                var message = " *📝  DeskAssistant *\n" +
+                             $" *______________________________*\n\n" +
+                             $"🚀 *Напоминание!*\n" +
+                             $" *______________________________*\n\n" +
+                             $"        * Задача на сегодня *\n\n" +
+                             $"📌  -   *{notification.Name}*\n\n" +
+                             $"📄  -   *Описание:* {notification.Description}\n\n" +
+                             $"🗓️  -   *Дата:* {notification.DueDate:dd.MM.yyyy}\n\n" +
+                             $"📈  -   *Статус:* {notification.Status}" +
+                             $" *______________________________*\n\n";
+
+                await _botClient.SendMessage(
+                    _chatId,
+                    message,
+                    parseMode: ParseMode.Markdown);
+
+                _logger.Info($"Напоминание отправлено: {notification.Name}");
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Ошибка отправки напоминания в Telegram");
+            }
+        }
+
         public async Task<List<CalendarTaskEntity>> GetAllTasksAsync()
         {
             using var context = _contextFactory.CreateDbContext();
