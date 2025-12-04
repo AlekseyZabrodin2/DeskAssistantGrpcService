@@ -22,7 +22,7 @@ namespace DeskAssistantGrpcService.Services
         }
 
 
-        public override async Task<NotificationResponse> NotificationsCreateAsync(NotificationItem notification, ServerCallContext context)
+        public override async Task<NotificationResponse> NotificationsCreate(NotificationItem notification, ServerCallContext context)
         {
             try
             {
