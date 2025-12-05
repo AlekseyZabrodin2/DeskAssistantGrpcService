@@ -50,6 +50,32 @@ namespace DeskAssistantGrpcService.Services
             }
         }
 
+        public override async Task<NotificationResponse> NotificationsDelete(NotificationItemId request, ServerCallContext context)
+        {
+            try
+            {
+                _logger.Info($"Удаление уведомления для '{request.ClientId}' с номером - [{request.Id}]");
+
+                await _notificationService.DeleteNotificationAsync(request.ClientId, request.Id);
+
+                return new NotificationResponse
+                {
+                    Success = true,
+                    Message = "Уведомление успешно удалено"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "gRPC: Ошибка при удалении уведомления");
+
+                return new NotificationResponse
+                {
+                    Success = false,
+                    Message = $"Ошибка: {ex.Message}"
+                };
+            }
+        }
+
         public override async Task<NotificationItemResponse> NotificationsGetSettings(NotificationClientIdRequest request, ServerCallContext context)
         {
             try
@@ -73,6 +99,33 @@ namespace DeskAssistantGrpcService.Services
                 {
                     Success = false,
                     Message = ex.Message
+                };
+            }
+        }
+
+        public override async Task<NotificationResponse> NotificationsSetStatus(NotificationItemStatus notification, ServerCallContext context)
+        {
+            try
+            {
+                _logger.Info($"Уведомление для '{notification.ClientId}' включен - [{(bool.Parse(notification.IsEnabled) ? "ВКЛ" : "ВЫКЛ")}]");
+
+                var notificationEntity = _notificationExtensions.ItemStatusToNotificationEntity(notification);
+                await _notificationService.SetNotificationsStatusAsync(notificationEntity);
+
+                return new NotificationResponse
+                {
+                    Success = true,
+                    Message = $"Статус для уведомления успешно {(bool.Parse(notification.IsEnabled) ? "ВКЛ" : "ВЫКЛ")}]"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Ошибка при выключении/включении уведомления");
+
+                return new NotificationResponse
+                {
+                    Success = false,
+                    Message = $"Ошибка: {ex.Message}"
                 };
             }
         }

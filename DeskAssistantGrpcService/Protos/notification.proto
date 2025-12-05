@@ -4,11 +4,9 @@ option csharp_namespace = "NotificationGrpcService";
 
 service NotificationService {
   rpc NotificationsGetSettings (NotificationClientIdRequest) returns (NotificationItemResponse);
-  rpc NotificationsGetStatus (NotificationItem) returns (NotificationItemResponse);
   rpc NotificationsCreate (NotificationItem) returns (NotificationResponse);
-  rpc NotificationsDelete (NotificationItem) returns (NotificationResponse);  
-  rpc NotificationsActivate (NotificationItem) returns (NotificationResponse);
-  rpc NotificationsDisable (NotificationItem) returns (NotificationResponse);
+  rpc NotificationsDelete (NotificationItemId) returns (NotificationResponse);  
+  rpc NotificationsSetStatus (NotificationItemStatus) returns (NotificationResponse);
 }
 
 message NotificationItem {
@@ -24,6 +22,17 @@ message NotificationItem {
     string saturday_enabled = 10;
     string sunday_enabled = 11;
     string created_at = 12;
+}
+
+message NotificationItemStatus {
+	string id = 1;
+    string client_id = 2;
+    string is_enabled = 3;
+}
+
+message NotificationItemId {
+	string id = 1;
+    string client_id = 2;
 }
 
 message NotificationClientIdRequest{
