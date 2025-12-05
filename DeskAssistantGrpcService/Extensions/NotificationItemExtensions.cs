@@ -45,5 +45,15 @@ namespace DeskAssistantGrpcService.Extensions
 
             };
         }
+
+        public NotificationEntityStatus ItemStatusToNotificationEntity(NotificationItemStatus notificationItem)
+        {
+            return new NotificationEntityStatus
+            {
+                Id = notificationItem.Id,
+                ClientId = notificationItem.ClientId,
+                IsEnabled = bool.Parse(notificationItem.IsEnabled)
+            };
+        }
     }
 }

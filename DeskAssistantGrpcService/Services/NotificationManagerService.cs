@@ -38,19 +38,33 @@ namespace DeskAssistantGrpcService.Services
             _timerHelper.GraficsNotificationTimers(notification);
         }
 
-        public Task DeleteNotificationAsync(NotificationEntity notification)
+        public async Task DeleteNotificationAsync(string clientId, string notificationId)
         {
-            throw new NotImplementedException();
+            using var context = _contextNotificationDb.CreateDbContext();
+            var notificationsForDelete = await context.Notifications
+                .Where(notif => notif.ClientId == clientId && notif.Id == notificationId)
+                .FirstOrDefaultAsync();
+
+            if (notificationsForDelete != null)
+            {
+                context.Notifications.Remove(notificationsForDelete);
+                context.SaveChanges();
+            }
         }
 
-        public Task ActivateNotificationsAsync(NotificationEntity notification)
+        public async Task SetNotificationsStatusAsync(NotificationEntityStatus setNotification)
         {
-            throw new NotImplementedException();
-        }
+            using var context = _contextNotificationDb.CreateDbContext();
+            var notifications = await context.Notifications
+                .Where(notif => notif.Id == setNotification.Id && notif.ClientId == setNotification.ClientId)
+                .FirstOrDefaultAsync();
 
-        public Task DisableNotificationsAsync(NotificationEntity notification)
-        {
-            throw new NotImplementedException();
+            if (notifications != null)
+            {
+                notifications.IsEnabled = setNotification.IsEnabled;
+
+                context.SaveChanges();
+            }                
         }
 
         public async Task<List<NotificationEntity>> GetNotificationsSettingsAsync(string clientId)
@@ -66,21 +80,6 @@ namespace DeskAssistantGrpcService.Services
             }
 
             return notifications;
-        }
-
-        public Task GetNotificationStatus(NotificationEntity notification)
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task StartNotificationServiceAsync()
-        {
-            
-        }
-
-        public async Task StopNotificationServiceAsync()
-        {
-            
         }
 
         public async Task InitializeTimersAsync()
