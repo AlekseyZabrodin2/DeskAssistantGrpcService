@@ -44,20 +44,27 @@ namespace DeskAssistantGrpcService.Helpers
             {
                 try
                 {
-                    _logger.Info($"\n🔔 УВЕДОМЛЕНИЕ СРАБОТАЛО!\n" +
-                        $"   ├─ ID: {notification.Id}\n" +
-                        $"   ├─ Клиент: {notification.ClientId}\n" +
-                        $"   ├─ Время: {DateTime.Now:HH:mm:ss}\n" +
-                        $"   └─ Запланированное время: {notification.NotificationTime:hh\\:mm}");
+                    _logger.Trace($"Уведомление - [{notification.Id}], статус отправления - [{notification.IsSentToday}]");
 
-                    await SendNotificationsForTodayAsync();
+                    if (!notification.IsSentToday)
+                    {
+                        _logger.Info($"\n🔔 УВЕДОМЛЕНИЕ СРАБОТАЛО!\n" +
+                                                $"   ├─ ID: {notification.Id}\n" +
+                                                $"   ├─ Клиент: {notification.ClientId}\n" +
+                                                $"   ├─ Время: {DateTime.Now:HH:mm:ss}\n" +
+                                                $"   └─ Запланированное время: {notification.NotificationTime:hh\\:mm}");
 
-                    _logger.Info($"✅ Уведомление отправлено: {notification.Id}");
+                        await SendNotificationsForTodayAsync();
 
-                    RemoveTimer(timerId);
+                        notification.IsSentToday = true;
 
-                    _logger.Info($"🔄 Перепланирование уведомления {notification.Id}...");
-                    GraficsNotificationTimers(notification);
+                        _logger.Info($"✅ Уведомление - [{notification.Id}] отправлено: {notification.IsSentToday}");
+
+                        RemoveTimer(timerId);
+
+                        _logger.Info($"🔄 Перепланирование уведомления {notification.Id}...");
+                        GraficsNotificationTimers(notification);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -148,6 +155,9 @@ namespace DeskAssistantGrpcService.Helpers
                 ScheduledTime = nextAlarm,
                 Notification = notification
             };
+
+            notification.IsSentToday = false;
+            _logger.Trace($"Таймер - [{notification.Id}] : [{notification.IsSentToday}]");
 
             _notificationTimers[timerId] = notificationTimer;
             _notificationIdToTimerMap[notification.Id] = timerId;

@@ -33,6 +33,8 @@ namespace DeskAssistantGrpcService.DataBase
 
                 entity.Property(notif => notif.CreatedAt).HasDefaultValueSql("NOW()").IsRequired();
 
+                entity.Property(notif => notif.IsSentToday).HasDefaultValue(false);
+
                 entity.HasIndex(notif => notif.Id).HasDatabaseName("IX_Notifications_Id").IsUnique();
             });
         }
