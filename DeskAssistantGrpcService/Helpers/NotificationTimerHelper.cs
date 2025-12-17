@@ -177,6 +177,10 @@ namespace DeskAssistantGrpcService.Helpers
 
                 _logger.Debug($"🗑️ Таймер {timerId} удален из коллекции");
                 _logger.Debug($"📊 Статистика: Уведомлений - {_notificationIdToTimerMap.Count}, Таймеров - {_notificationTimers.Count}");
+
+                var pause = 300;
+                _logger.Trace($"Пауза {pause} ms...");
+                _ = Task.Delay(pause);
             }
         }
 
