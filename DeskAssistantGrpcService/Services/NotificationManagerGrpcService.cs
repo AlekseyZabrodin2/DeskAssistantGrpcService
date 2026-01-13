@@ -1,10 +1,8 @@
-﻿using DeskAssistant.Core.Models;
-using DeskAssistant.Core.Services;
+﻿using DeskAssistant.Core.Services;
 using DeskAssistantGrpcService.Extensions;
 using Grpc.Core;
 using NLog;
 using NotificationGrpcService;
-using System.Globalization;
 using ILogger = NLog.ILogger;
 
 namespace DeskAssistantGrpcService.Services

@@ -1,0 +1,30 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "BirthdaysGrpcService";
+
+service BirthdayService {
+  rpc SetBirthdays (BirthdayItem) returns (BirthdaySetResponse);
+  rpc GetBirthdays (BirthdayEmptyRequest) returns (BirthdayGetResponse);
+}
+
+message BirthdayItem {
+	string id = 1;
+    string last_name = 2;
+    string name = 3;
+    string middle_name = 4;
+    string birthday =5;
+    string email = 6;
+}
+
+message BirthdayEmptyRequest {}
+
+message BirthdaySetResponse {
+	bool success = 1;
+	string message = 2;
+}
+
+message BirthdayGetResponse {
+	bool success = 1;
+	string message = 2;
+	repeated BirthdayItem birthdays = 3;
+}
