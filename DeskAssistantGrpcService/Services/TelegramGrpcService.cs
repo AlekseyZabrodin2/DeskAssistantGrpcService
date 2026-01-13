@@ -1,4 +1,5 @@
-﻿using DeskAssistant.Core.Services;
+﻿using DeskAssistant.Core.Models;
+using DeskAssistant.Core.Services;
 using DeskAssistantGrpcService.Extensions;
 using Grpc.Core;
 using NLog;
@@ -12,12 +13,14 @@ namespace DeskAssistantGrpcService.Services
     {
         private static readonly ILogger _logger = LogManager.GetCurrentClassLogger();
         private readonly ITelegramNotificationService _telegramService;
+        private readonly IBirthdaysService _birthdayService;
         private CalendarTasksExtensions _calendarExtensions = new();
 
 
-        public TelegramGrpcService(ITelegramNotificationService telegramService)
+        public TelegramGrpcService(ITelegramNotificationService telegramService, IBirthdaysService birthdayService)
         {
             _telegramService = telegramService;
+            _birthdayService = birthdayService;
         }
 
 
@@ -28,6 +31,8 @@ namespace DeskAssistantGrpcService.Services
                 var response = new TelegramGetTodayTasksResponse();
 
                 var allTasks = await _telegramService.GetTasksForTodayAsync();
+                var birthday = await _birthdayService.GetBirthdaysForTodayAsync();
+
                 foreach (var item in allTasks)
                 {
                     var taskItem = _calendarExtensions.TelegramTaskItemToGrpcTask(item);
@@ -35,6 +40,13 @@ namespace DeskAssistantGrpcService.Services
 
                     response.Messages.Add(message);
                     response.Tasks.Add(taskItem);
+                }
+
+                foreach (var bday in birthday)
+                {
+                    var message = GenerateTelegramMessages(bday);
+
+                    response.Messages.Add(message);
                 }
 
                 response.Success = true;
@@ -64,6 +76,18 @@ namespace DeskAssistantGrpcService.Services
                          $"📄  -   *Описание:* {telegramTask.Description}\n\n" +
                          $"🗓️  -   *Дата:* {telegramTask.DueDate:dd.MM.yyyy}\n\n" +
                          $"📈  -   *Статус:* {telegramTask.Status}" +
+                         $" *______________________________*\n\n";
+
+            return message;
+        }
+
+        private string GenerateTelegramMessages(BirthdaysEntity birthdaysEntity)
+        {
+            var message = " *📝  Jarvis докладывает *\n" +
+                         $" *______________________________*\n\n" +
+                         $"🥳 * День рождения сегодня! *\n" +
+                         $" *______________________________*\n\n" +
+                         $" * празднует - [ {birthdaysEntity.LastName} {birthdaysEntity.Name} ]*\n\n" +
                          $" *______________________________*\n\n";
 
             return message;
