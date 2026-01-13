@@ -32,6 +32,12 @@ try
 
     logger.Info($"App start with [{environmentName}] environment");
 
+    builder.Services.AddDbContextFactory<BirthdaysDbContext>(options =>
+    {
+        var connectingString = builder.Configuration.GetConnectionString("DefaultBirthdayTableConnection");
+        options.UseNpgsql(connectingString);
+    });
+
     builder.Services.AddDbContextFactory<TasksDbContext>(options =>
     {
         var connectingString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -46,6 +52,7 @@ try
 
     // Add services to the container.
     builder.Services.AddGrpc();
+    builder.Services.AddScoped<IBirthdaysService, BirthdayServiceImpl>();
     builder.Services.AddSingleton<NotificationTimerHelper>();
     builder.Services.AddSingleton<ITelegramNotificationService, TelegramNotificationService>();
     builder.Services.AddScoped<ITaskService, TaskServiceImpl>();
@@ -54,9 +61,10 @@ try
 
     builder.Services.Configure<ConnectionSettings>(builder.Configuration.GetSection("ConnectionStrings"));
 
-    var app = builder.Build();  
+    var app = builder.Build();
 
     // Configure the HTTP request pipeline.
+    app.MapGrpcService<BirthdayGrpcService>();
     app.MapGrpcService<TaskGrpcService>();
     app.MapGrpcService<TelegramGrpcService>();
     app.MapGrpcService<NotificationManagerGrpcService>();
@@ -86,13 +94,20 @@ async Task InitializeDatabaseAndTimersAsync(WebApplication app)
 {
     using (var scope = app.Services.CreateScope())
     {
+        var birthdayFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<BirthdaysDbContext>>();
+        using var dbBirthday = birthdayFactory.CreateDbContext();
+        dbBirthday.Database.EnsureCreated();
+        logger.Info("Birthdays Db Ensure Created");
+
         var taskFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<TasksDbContext>>();
         using var db = taskFactory.CreateDbContext();
         db.Database.EnsureCreated();
+        logger.Info("Tasks Db Ensure Created");
 
         var notifFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<NotificationDbContext>>();
         using var dbNotif = notifFactory.CreateDbContext();
         dbNotif.Database.EnsureCreated();
+        logger.Info("Notification Db Ensure Created");
 
         var notificationService = scope.ServiceProvider.GetRequiredService<NotificationManagerService>();
         await notificationService.InitializeTimersAsync();
