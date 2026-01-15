@@ -13,15 +13,16 @@ message NotificationItem {
 	string id = 1;
     string client_id = 2;
     string is_enabled = 3;
-    string notification_time = 4;
-    string monday_enabled =5;
-    string tuesday_enabled = 6;
-    string wednesday_enabled = 7;
-    string thursday_enabled = 8;
-    string friday_enabled = 9;
-    string saturday_enabled = 10;
-    string sunday_enabled = 11;
-    string created_at = 12;
+    string timer_id = 4;
+    string notification_time = 5;
+    string monday_enabled =6;
+    string tuesday_enabled = 7;
+    string wednesday_enabled = 8;
+    string thursday_enabled = 9;
+    string friday_enabled = 10;
+    string saturday_enabled = 11;
+    string sunday_enabled = 12;
+    string created_at = 13;
 }
 
 message NotificationItemStatus {

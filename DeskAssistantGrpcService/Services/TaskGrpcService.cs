@@ -35,7 +35,7 @@ namespace DeskAssistantGrpcService.Services
 
                 var createdTask = _taskService.AddTaskForSelectedDate(taskEntity);
 
-                _ = Task.Run(async () => _telegramService.NotifyTaskCreatedAsync(taskModel));
+                _ = Task.Run(async () => _telegramService.NotifiTaskCreatedAsync(taskModel));
 
                 return new TaskResponse
                 {
@@ -125,7 +125,7 @@ namespace DeskAssistantGrpcService.Services
         {
             try
             {
-                await _telegramService.NotifyTaskCompletedAsync(new CalendarTaskModel
+                await _telegramService.NotifiTaskCompletedAsync(new CalendarTaskModel
                 {
                     Id = request.TaskId,
                     Name = request.TaskName,

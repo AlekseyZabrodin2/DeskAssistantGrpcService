@@ -23,6 +23,8 @@ namespace DeskAssistantGrpcService.DataBase
                 entity.Property(notif => notif.IsEnabled).HasDefaultValue(false);
                 entity.Property(notif => notif.NotificationTime);
 
+                entity.Property(notif => notif.TimerId).HasMaxLength(36).IsRequired(false);
+
                 entity.Property(notif => notif.MondayEnabled).HasDefaultValue(false);
                 entity.Property(notif => notif.TuesdayEnabled).HasDefaultValue(false);
                 entity.Property(notif => notif.WednesdayEnabled).HasDefaultValue(false);
@@ -35,7 +37,7 @@ namespace DeskAssistantGrpcService.DataBase
 
                 entity.Property(notif => notif.IsSentToday).HasDefaultValue(false);
 
-                entity.HasIndex(notif => notif.Id).HasDatabaseName("IX_Notifications_Id").IsUnique();
+                entity.HasIndex(notif => notif.TimerId).IsUnique().HasFilter("\"TimerId\" IS NOT NULL");
             });
         }
     }
