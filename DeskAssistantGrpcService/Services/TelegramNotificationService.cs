@@ -34,12 +34,12 @@ namespace DeskAssistantGrpcService.Services
 
 
 
-        public async Task NotifyTaskCompletedAsync(CalendarTaskModel notification)
+        public async Task NotifiTaskCompletedAsync(CalendarTaskModel notification)
         {
             throw new NotImplementedException();
         }
 
-        public async Task NotifyTaskCreatedAsync(CalendarTaskModel notification)
+        public async Task NotifiTaskCreatedAsync(CalendarTaskModel notification)
         {
             try
             {
@@ -66,7 +66,7 @@ namespace DeskAssistantGrpcService.Services
             }
         }
 
-        public async Task NotifycationFromClientAsync(CalendarTaskModel notification)
+        public async Task NotificationAboutTasksAsync(CalendarTaskModel notification)
         {
             try
             {
@@ -91,6 +91,31 @@ namespace DeskAssistantGrpcService.Services
             catch (Exception ex)
             {
                 _logger.Error(ex, "Ошибка отправки напоминания в Telegram");
+            }
+        }
+
+        public async Task NotificationAboutBirthdaysAsync(BirthdaysEntity birthdays)
+        {
+            try
+            {
+                var message = $"🚀 *Напоминание!*\n" +
+                            $" *______________________________*\n\n" +
+                            $"🥳 * День рождения сегодня! *\n" +
+                            $" * празднует - [ {birthdays.LastName} {birthdays.Name} ]*\n" +
+                            $" *______________________________*\n\n" + 
+                            " *📝  DeskAssistant *\n" +
+                            $" *______________________________*\n\n";
+
+                await _botClient.SendMessage(
+                    _chatId,
+                    message,
+                    parseMode: ParseMode.Markdown);
+
+                _logger.Info($"Напоминание о ДР отправлено: {birthdays.Id}");
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Ошибка отправки напоминания о ДР в Telegram");
             }
         }
 
