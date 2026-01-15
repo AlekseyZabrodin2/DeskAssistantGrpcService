@@ -1,4 +1,5 @@
-﻿using DeskAssistant.Core.Models;
+﻿using BirthdaysGrpcService;
+using DeskAssistant.Core.Models;
 using DeskAssistant.Core.Services;
 using DeskAssistantGrpcService.DataBase;
 using DeskAssistantGrpcService.Extensions;
@@ -18,14 +19,16 @@ namespace DeskAssistantGrpcService.Helpers
         private CalendarTasksExtensions _calendarExtensions = new();
         private readonly IDbContextFactory<TasksDbContext> _contextTasksDb;
         private readonly ITelegramNotificationService _telegramService;
+        private readonly IBirthdaysService _birthdayService;
         private bool _disposed = false;
 
 
         public NotificationTimerHelper(IDbContextFactory<TasksDbContext> contextTasksDb,
-            ITelegramNotificationService telegramService)
+            ITelegramNotificationService telegramService, IBirthdaysService birthdayService)
         {
             _contextTasksDb = contextTasksDb;
             _telegramService = telegramService;
+            _birthdayService = birthdayService;
         }
 
 
@@ -36,9 +39,8 @@ namespace DeskAssistantGrpcService.Helpers
                 _logger.Info($"Уведомление {notification.Id} отключено, пропускаем");
                 return;
             }
-
-            var timerId = Guid.NewGuid();
-            var (delay, nextAlarm) = ScheduleNotification(notification, timerId);
+                        
+            var (delay, nextAlarm) = ScheduleNotification(notification);
 
             var timer = new Timer(async _ =>
             {
@@ -54,13 +56,14 @@ namespace DeskAssistantGrpcService.Helpers
                                                 $"   ├─ Время: {DateTime.Now:HH:mm:ss}\n" +
                                                 $"   └─ Запланированное время: {notification.NotificationTime:hh\\:mm}");
 
-                        await SendNotificationsForTodayAsync();
+                        await SendNotificationsAboutTasksTodayAsync();
+                        await SendNotificationsAboutBirthdaysTodayAsync();
 
                         notification.IsSentToday = true;
 
                         _logger.Info($"✅ Уведомление - [{notification.Id}] отправлено: {notification.IsSentToday}");
 
-                        RemoveTimer(timerId);
+                        RemoveTimer((Guid)notification.TimerId);
 
                         _logger.Info($"🔄 Перепланирование уведомления {notification.Id}...");
                         GraficsNotificationTimers(notification);
@@ -69,12 +72,12 @@ namespace DeskAssistantGrpcService.Helpers
                 catch (Exception ex)
                 {
                     _logger.Error(ex, $"Ошибка при отправке уведомления {notification.Id}");
-                    RemoveTimer(timerId);
+                    RemoveTimer((Guid)notification.TimerId);
                     GraficsNotificationTimers(notification);
                 }
             }, null, delay, Timeout.InfiniteTimeSpan);
 
-            CreateNotificationTimersDictionary(notification, timerId, timer, nextAlarm);
+            CreateNotificationTimersDictionary(notification, timer, nextAlarm);
         }
 
         public async Task<List<CalendarTaskEntity>> GetTodayTasksAsync()
@@ -87,7 +90,7 @@ namespace DeskAssistantGrpcService.Helpers
             return todayTasks;
         }
 
-        public async Task SendNotificationsForTodayAsync()
+        public async Task SendNotificationsAboutTasksTodayAsync()
         {
             try
             {
@@ -97,9 +100,28 @@ namespace DeskAssistantGrpcService.Helpers
                 {
                     var taskModel = _calendarExtensions.TaskEntityToCalendarTaskModel(taskItem);
 
-                    _ = Task.Run(async () => _telegramService.NotifycationFromClientAsync(taskModel));
+                    _ = Task.Run(async () => _telegramService.NotificationAboutTasksAsync(taskModel));
 
                     _logger.Info($"Уведомление для задачи - '{taskModel.Id}' успешно отправлено");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "gRPC: Ошибка отправки уведомления");
+            }
+        }
+
+        public async Task SendNotificationsAboutBirthdaysTodayAsync()
+        {
+            try
+            {                
+                var birthday = await _birthdayService.GetBirthdaysForTodayAsync();
+
+                foreach (var bday in birthday)
+                {
+                    _ = Task.Run(async () => _telegramService.NotificationAboutBirthdaysAsync(bday));
+
+                    _logger.Info($"Уведомление для ДР - '{bday.Id}' успешно отправлено");
                 }
             }
             catch (Exception ex)
@@ -113,7 +135,7 @@ namespace DeskAssistantGrpcService.Helpers
             return _notificationIdToTimerMap.ContainsKey(notificationId.Id);
         }
 
-        private (TimeSpan delay, DateTime nextAlarm) ScheduleNotification(NotificationEntity notification, Guid timerId)
+        private (TimeSpan delay, DateTime nextAlarm) ScheduleNotification(NotificationEntity notification)
         {
             var nextAlarm = GetNextAlarmDateTime(notification);
             var now = DateTime.Now;
@@ -127,7 +149,7 @@ namespace DeskAssistantGrpcService.Helpers
             }
 
             var timerInfo = $"\n📅 ПЛАНИРОВАНИЕ УВЕДОМЛЕНИЯ\n" +
-                    $"   ├─ ID таймера: {timerId}\n" +
+                    $"   ├─ ID таймера: {notification.TimerId}\n" +
                     $"   ├─ ID уведомления: {notification.Id}\n" +
                     $"   ├─ Для клиента: {notification.ClientId}\n" +
                     $"   ├─ Запланировано на: {nextAlarm}\n" +
@@ -139,7 +161,7 @@ namespace DeskAssistantGrpcService.Helpers
             return (delay, nextAlarm);
         }
 
-        private void CreateNotificationTimersDictionary(NotificationEntity notification, Guid timerId, Timer timer, DateTime nextAlarm)
+        private void CreateNotificationTimersDictionary(NotificationEntity notification, Timer timer, DateTime nextAlarm)
         {
             if (IsNotificationAlreadyScheduled(notification))
             {
@@ -149,7 +171,7 @@ namespace DeskAssistantGrpcService.Helpers
 
             var notificationTimer = new NotificationTimer
             {
-                Id = timerId,
+                Id = (Guid)notification.TimerId,
                 NotificationId = notification.Id,
                 Timer = timer,
                 ScheduledTime = nextAlarm,
@@ -157,16 +179,16 @@ namespace DeskAssistantGrpcService.Helpers
             };
 
             notification.IsSentToday = false;
-            _logger.Trace($"Таймер - [{notification.Id}] : [{notification.IsSentToday}]");
+            _logger.Trace($"Таймер - [{notification.Id}] : Is Sent Today - [{notification.IsSentToday}]");
+                        
+            _notificationTimers[(Guid)notification.TimerId] = notificationTimer;
+            _notificationIdToTimerMap[notification.Id] = (Guid)notification.TimerId;
 
-            _notificationTimers[timerId] = notificationTimer;
-            _notificationIdToTimerMap[notification.Id] = timerId;
-
-            _logger.Debug($"Добавлен таймер {timerId} в коллекцию. Всего таймеров: {_notificationTimers.Count}");
+            _logger.Debug($"Добавлен таймер {notification.TimerId} в коллекцию. Всего таймеров: {_notificationTimers.Count}");
         }
 
 
-        private void RemoveTimer(Guid timerId)
+        public void RemoveTimer(Guid timerId)
         {
             // Удаляем таймер из коллекции после выполнения
             if (_notificationTimers.TryRemove(timerId, out var timerInfo))
