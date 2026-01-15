@@ -52,7 +52,7 @@ try
 
     // Add services to the container.
     builder.Services.AddGrpc();
-    builder.Services.AddScoped<IBirthdaysService, BirthdayServiceImpl>();
+    builder.Services.AddSingleton<IBirthdaysService, BirthdayServiceImpl>();
     builder.Services.AddSingleton<NotificationTimerHelper>();
     builder.Services.AddSingleton<ITelegramNotificationService, TelegramNotificationService>();
     builder.Services.AddScoped<ITaskService, TaskServiceImpl>();
