@@ -78,6 +78,8 @@ namespace DeskAssistantGrpcService.Services
                          $"📈  -   *Статус:* {telegramTask.Status}" +
                          $" *______________________________*\n\n";
 
+            _logger.Info(message);
+
             return message;
         }
 
@@ -89,6 +91,8 @@ namespace DeskAssistantGrpcService.Services
                          $" *______________________________*\n\n" +
                          $" * празднует - [ {birthdaysEntity.LastName} {birthdaysEntity.Name} ]*\n\n" +
                          $" *______________________________*\n\n";
+
+            _logger.Info(message);
 
             return message;
         }

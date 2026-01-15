@@ -14,17 +14,20 @@ namespace DeskAssistantGrpcService.Services
         private readonly IDbContextFactory<NotificationDbContext> _contextNotificationDb;
         private readonly IDbContextFactory<TasksDbContext> _contextTasksDb;
         private readonly ITelegramNotificationService _telegramService;
+        private readonly IBirthdaysService _birthdayService;
         private readonly NotificationTimerHelper _timerHelper;
 
 
         public NotificationManagerService(IDbContextFactory<NotificationDbContext> contextNotificationDb,
             IDbContextFactory<TasksDbContext> contextTasksDb,
-            ITelegramNotificationService telegramService)
+            ITelegramNotificationService telegramService,
+            IBirthdaysService birthdayService)
         {
             _contextNotificationDb = contextNotificationDb;
             _contextTasksDb = contextTasksDb;
             _telegramService = telegramService;
-            _timerHelper = new(_contextTasksDb, _telegramService);
+            _birthdayService = birthdayService;
+            _timerHelper = new(_contextTasksDb, _telegramService, _birthdayService);
         }
 
 
@@ -50,6 +53,7 @@ namespace DeskAssistantGrpcService.Services
                 context.Notifications.Remove(notificationsForDelete);
                 context.SaveChanges();
             }
+            _timerHelper.RemoveTimer((Guid)notificationsForDelete.TimerId);
         }
 
         public async Task SetNotificationsStatusAsync(NotificationEntityStatus setNotification)
